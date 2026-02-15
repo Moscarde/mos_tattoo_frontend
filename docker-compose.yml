@@ -1,0 +1,18 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mos_tattoo_frontend
+    ports:
+      - "3000:80"
+    environment:
+      - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:8000}
+      - REACT_APP_LOGIN_ENDPOINT=${REACT_APP_LOGIN_ENDPOINT:-/api/auth/login/}
+    restart: unless-stopped
+    networks:
+      - mos_tattoo_network
+
+networks:
+  mos_tattoo_network:
+    driver: bridge
