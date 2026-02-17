@@ -1,0 +1,7 @@
+Em 1998, no coração vibrante do Rio de Janeiro, nascia a Mos Tattoo Supply. O que começou como um pequeno balcão de suprimentos para tatuadores locais rapidamente se transformou em um pilar da indústria de tatuagem brasileira. A paixão pela arte na pele e o compromisso em fornecer materiais de alta qualidade impulsionaram seus fundadores a expandir.
+
+Com o passar dos anos, a Mos Tattoo Supply não apenas comercializou, mas também inovou. Eles se tornaram referência na fabricação de máquinas de tatuagem robustas e precisas, agulhas esterilizadas de ponta e fontes de energia confiáveis. A gama de tintas, com uma paleta de cores tão vasta quanto a criatividade de um tatuador, também se tornou um dos seus maiores orgulhos.
+
+A marca expandiu sua presença para além das fronteiras cariocas, estabelecendo lojas físicas em mais de cinco estados brasileiros. A força de sua distribuição, no entanto, não parou por aí. A Mos Tattoo Supply abraçou o mundo digital, criando uma plataforma online que permite a tatuadores de todo o país e até mesmo do exterior acessarem seus produtos de forma rápida e eficiente.
+
+Hoje, a Mos Tattoo Supply é sinônimo de excelência e inovação, uma marca que cresceu com a cultura da tatuagem no Brasil e continua a impulsionar a arte com seus produtos de qualidade.
