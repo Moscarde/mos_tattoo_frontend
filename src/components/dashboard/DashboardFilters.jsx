@@ -19,18 +19,10 @@ const DashboardFilters = ({ availableFilters, appliedFilters, onApplyFilters, lo
   const [isExpanded, setIsExpanded] = useState(false);
   const [openDropdowns, setOpenDropdowns] = useState({});
   const dropdownRefs = useRef({});
-
-  // Inicializar seleções categóricas quando availableFilters muda
-  useEffect(() => {
-    if (availableFilters?.categorical) {
-      const initialSelections = {};
-      availableFilters.categorical.forEach(filter => {
-        // Por padrão, todos os valores estão selecionados
-        initialSelections[filter.field] = [...filter.values];
-      });
-      setCategoricalSelections(initialSelections);
-    }
-  }, [availableFilters]);
+  
+  // Manter referência dos filtros atualmente aplicados no backend
+  // Isso garante que sempre reenviamos todos os filtros ativos
+  const activeFiltersRef = useRef({});
 
   // Fechar dropdown ao clicar fora
   useEffect(() => {
@@ -47,9 +39,94 @@ const DashboardFilters = ({ availableFilters, appliedFilters, onApplyFilters, lo
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [openDropdowns]);
 
-  // Calcular datas baseado no período selecionado
+  // Sincronizar estado do formulário com filtros aplicados e disponíveis
+  // Suporta filtros adaptativos: valores disponíveis mudam baseado em outros filtros
+  useEffect(() => {
+    if (!availableFilters) return;
+
+    // Sincronizar filtros temporais
+    if (availableFilters.temporal) {
+      const temporalApplied = appliedFilters?.[availableFilters.temporal.field];
+      
+      if (temporalApplied && (temporalApplied.gte || temporalApplied.lte)) {
+        const gteDate = temporalApplied.gte ? parseISO(temporalApplied.gte) : null;
+        const lteDate = temporalApplied.lte ? parseISO(temporalApplied.lte) : null;
+        
+        // Detectar se corresponde a algum preset
+        const today = new Date();
+        const yesterday = subDays(today, 1);
+        const currentMonthStart = startOfMonth(today);
+        const currentMonthEnd = endOfMonth(today);
+        const previousMonth = subMonths(today, 1);
+        const previousMonthStart = startOfMonth(previousMonth);
+        const previousMonthEnd = endOfMonth(previousMonth);
+        
+        let detectedPeriod = 'custom';
+        
+        if (gteDate && lteDate) {
+          const gteStr = format(gteDate, 'yyyy-MM-dd');
+          const lteStr = format(lteDate, 'yyyy-MM-dd');
+          const yesterdayStr = format(yesterday, 'yyyy-MM-dd');
+          const currentMonthStartStr = format(currentMonthStart, 'yyyy-MM-dd');
+          const currentMonthEndStr = format(currentMonthEnd, 'yyyy-MM-dd');
+          const previousMonthStartStr = format(previousMonthStart, 'yyyy-MM-dd');
+          const previousMonthEndStr = format(previousMonthEnd, 'yyyy-MM-dd');
+          
+          if (gteStr === yesterdayStr && lteStr === yesterdayStr) {
+            detectedPeriod = 'yesterday';
+          } else if (gteStr === currentMonthStartStr && lteStr === currentMonthEndStr) {
+            detectedPeriod = 'current_month';
+          } else if (gteStr === previousMonthStartStr && lteStr === previousMonthEndStr) {
+            detectedPeriod = 'previous_month';
+          }
+        }
+        
+        setPeriod(detectedPeriod);
+        setStartDate(gteDate);
+        setEndDate(lteDate);
+      } else {
+        // Sem filtro temporal aplicado
+        setPeriod('total');
+        setStartDate(null);
+        setEndDate(null);
+      }
+    }
+
+    // Sincronizar filtros categóricos com suporte a filtros adaptativos
+    if (availableFilters.categorical) {
+      const newSelections = {};
+      
+      availableFilters.categorical.forEach(filter => {
+        const appliedValues = appliedFilters?.[filter.field];
+        const availableValues = filter.values || [];
+        
+        if (appliedValues && appliedValues.in && Array.isArray(appliedValues.in)) {
+          // Fazer interseção entre valores aplicados e valores disponíveis
+          // Isso garante que valores que não existem mais (por filtros adaptativos) sejam removidos
+          const intersection = appliedValues.in.filter(val => 
+            availableValues.includes(val)
+          );
+          
+          newSelections[filter.field] = intersection;
+        } else {
+          // Sem filtro aplicado: todos os valores disponíveis estão selecionados
+          newSelections[filter.field] = [...availableValues];
+        }
+      });
+      
+      setCategoricalSelections(newSelections);
+    }
+    
+    // Atualizar referência dos filtros ativos
+    activeFiltersRef.current = appliedFilters || {};
+  }, [appliedFilters, availableFilters]);
+
+  // Calcular datas automaticamente quando usuário muda o período manualmente
   useEffect(() => {
     if (!availableFilters?.temporal) return;
+    
+    // Não recalcular se o período for 'custom' (usuário escolhe datas manualmente)
+    if (period === 'custom') return;
 
     const today = new Date();
     let newStartDate = null;
@@ -72,10 +149,6 @@ const DashboardFilters = ({ availableFilters, appliedFilters, onApplyFilters, lo
         newStartDate = startOfMonth(lastMonth);
         newEndDate = endOfMonth(lastMonth);
         break;
-      
-      case 'custom':
-        // Não altera as datas - usuário escolhe manualmente
-        return;
       
       case 'total':
       default:
@@ -129,19 +202,31 @@ const DashboardFilters = ({ availableFilters, appliedFilters, onApplyFilters, lo
   };
 
   // Construir query params para enviar ao backend
+  // IMPORTANTE: Sempre reenvia TODOS os filtros ativos para manter estado consistente
   const buildQueryParams = () => {
     const params = {};
+    const activeFilters = activeFiltersRef.current || {};
 
     // Filtros temporais
-    if (availableFilters?.temporal && period !== 'total') {
+    if (availableFilters?.temporal) {
       const { field } = availableFilters.temporal;
       
-      if (startDate) {
-        params[`${field}__gte`] = format(startDate, 'yyyy-MM-dd');
-      }
-      
-      if (endDate) {
-        params[`${field}__lte`] = format(endDate, 'yyyy-MM-dd');
+      if (period !== 'total' && (startDate || endDate)) {
+        // Filtro temporal ativo no formulário
+        if (startDate) {
+          params[`${field}__gte`] = format(startDate, 'yyyy-MM-dd');
+        }
+        if (endDate) {
+          params[`${field}__lte`] = format(endDate, 'yyyy-MM-dd');
+        }
+      } else if (activeFilters[field]) {
+        // Reenvirar filtro temporal que estava aplicado antes
+        if (activeFilters[field].gte) {
+          params[`${field}__gte`] = activeFilters[field].gte;
+        }
+        if (activeFilters[field].lte) {
+          params[`${field}__lte`] = activeFilters[field].lte;
+        }
       }
     }
 
@@ -149,15 +234,21 @@ const DashboardFilters = ({ availableFilters, appliedFilters, onApplyFilters, lo
     if (availableFilters?.categorical) {
       availableFilters.categorical.forEach(filter => {
         const selectedValues = categoricalSelections[filter.field] || [];
+        const wasApplied = activeFilters[filter.field]?.in;
+        const allAvailableSelected = selectedValues.length === filter.values.length;
         
-        // Só adiciona o filtro se não estiver com todos selecionados (otimização)
-        if (selectedValues.length > 0 && selectedValues.length < filter.values.length) {
-          params[`${filter.field}__in`] = selectedValues.join(',');
+        // Sempre envia o filtro se:
+        // 1. Há valores selecionados (mesmo que todos)
+        // 2. OU o filtro estava aplicado anteriormente
+        if (selectedValues.length > 0) {
+          // Se estava aplicado antes OU não são todos selecionados, envia
+          if (wasApplied || !allAvailableSelected) {
+            params[`${filter.field}__in`] = selectedValues.join(',');
+          }
         } else if (selectedValues.length === 0) {
-          // Se nenhum selecionado, enviar array vazio para não trazer nada
+          // Nenhum selecionado - enviar vazio para não trazer nada
           params[`${filter.field}__in`] = '';
         }
-        // Se todos estão selecionados, não envia o parâmetro (equivalente a não filtrar)
       });
     }
 

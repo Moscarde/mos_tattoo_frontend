@@ -32,12 +32,12 @@ export const getDashboardData = async (id, queryParams = {}) => {
                 params.append(key, value);
             }
         });
-        
+
         const queryString = params.toString();
-        const url = queryString 
+        const url = queryString
             ? `/api/dashboards/${id}/data/?${queryString}`
             : `/api/dashboards/${id}/data/`;
-        
+
         const response = await api.get(url);
         return { success: true, data: response.data };
     } catch (error) {
