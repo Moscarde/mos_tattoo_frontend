@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { getDashboardData } from '../services/dashboard';
 import DashboardGrid from '../components/dashboard/DashboardGrid';
+import DashboardFilters from '../components/dashboard/DashboardFilters';
 
 /**
  * Página de visualização de um dashboard específico
@@ -10,35 +11,57 @@ import DashboardGrid from '../components/dashboard/DashboardGrid';
 function DashboardView() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   
   const [dashboard, setDashboard] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [availableFilters, setAvailableFilters] = useState(null);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     loadDashboard();
-  }, [id]);
+  }, [id, searchParams]);
 
   const loadDashboard = async () => {
     setLoading(true);
     setError('');
 
-    const result = await getDashboardData(id);
+    // Converter query params da URL para objeto
+    const queryParams = {};
+    searchParams.forEach((value, key) => {
+      queryParams[key] = value;
+    });
+
+    const result = await getDashboardData(id, queryParams);
 
     if (result.success) {
       setDashboard(result.data);
+      
+      // Extrair filtros disponíveis se existirem
+      if (result.data.filters?.available) {
+        setAvailableFilters(result.data.filters.available);
+      }
     } else {
       setError(result.error);
     }
 
     setLoading(false);
+    setIsInitialLoad(false);
+  };
+
+  const handleApplyFilters = (queryParams) => {
+    // Atualizar URL com novos query params
+    setSearchParams(queryParams);
+    // O useEffect vai triggerar loadDashboard automaticamente
   };
 
   const handleBack = () => {
     navigate('/app/dashboards');
   };
 
-  if (loading) {
+  // Loading inicial - tela cheia
+  if (isInitialLoad) {
     return (
       <div className="container">
         <div className="loading">Carregando dashboard...</div>
@@ -46,6 +69,7 @@ function DashboardView() {
     );
   }
 
+  // Erro
   if (error) {
     return (
       <div className="container">
@@ -94,10 +118,29 @@ function DashboardView() {
         </button>
       </div>
 
-      <DashboardGrid 
-        schema={dashboard.schema} 
-        blocks={dashboard.blocks || []} 
-      />
+      {/* Filtros dinâmicos */}
+      {availableFilters && (
+        <DashboardFilters 
+          availableFilters={availableFilters}
+          appliedFilters={dashboard.filters?.applied || {}}
+          onApplyFilters={handleApplyFilters}
+          loading={loading}
+        />
+      )}
+
+      {/* Overlay de loading durante refetch */}
+      <div className={`dashboard-content ${loading ? 'loading' : ''}`}>
+        {loading && (
+          <div className="dashboard-loading-overlay">
+            <div className="loading-spinner">Atualizando gráficos...</div>
+          </div>
+        )}
+        
+        <DashboardGrid 
+          schema={dashboard.schema} 
+          blocks={dashboard.blocks || []} 
+        />
+      </div>
     </div>
   );
 }

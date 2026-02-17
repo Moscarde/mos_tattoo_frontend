@@ -20,11 +20,25 @@ export const getDashboards = async () => {
 /**
  * Busca os dados completos de um dashboard específico
  * @param {string} id - ID do dashboard
+ * @param {Object} queryParams - Parâmetros de filtro opcionais (ex: { sold_at__gte: '2024-01-01', seller_id__in: '1,2,3' })
  * @returns {Promise<Object>} Dados completos do dashboard
  */
-export const getDashboardData = async (id) => {
+export const getDashboardData = async (id, queryParams = {}) => {
     try {
-        const response = await api.get(`/api/dashboards/${id}/data/`);
+        // Construir URL com query parameters
+        const params = new URLSearchParams();
+        Object.entries(queryParams).forEach(([key, value]) => {
+            if (value !== null && value !== undefined && value !== '') {
+                params.append(key, value);
+            }
+        });
+        
+        const queryString = params.toString();
+        const url = queryString 
+            ? `/api/dashboards/${id}/data/?${queryString}`
+            : `/api/dashboards/${id}/data/`;
+        
+        const response = await api.get(url);
         return { success: true, data: response.data };
     } catch (error) {
         console.error('Erro ao buscar dados do dashboard:', error);
