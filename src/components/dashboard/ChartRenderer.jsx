@@ -177,7 +177,12 @@ function ChartRenderer({ chart, data }) {
   };
 
   // Cores do tema
-  const COLORS = ['#FFD700', '#000000', '#FFA500', '#FFE55C', '#333333'];
+  
+const COLORS = [
+  '#FFD700', '#FFA500', '#FFE55C', '#B8860B', '#333333', '#856404', // Escala Amarela
+  '#1E3A8A', '#002D59', // Escala Azul
+  '#8B0000', '#B22222', '#FF0000', '#450A0A' // Escala Vermelha
+];
 
   // Renderizar métrica (valor único)
   if (chartType === 'metric') {

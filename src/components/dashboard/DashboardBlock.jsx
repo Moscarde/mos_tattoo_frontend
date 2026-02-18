@@ -18,9 +18,10 @@ function DashboardBlock({ block }) {
   }
 
   const { title, chart, data } = block;
+  const isMetric = chart?.type === 'metric';
 
   return (
-    <div className="dashboard-block">
+    <div className={`dashboard-block ${isMetric ? 'dashboard-block-metric' : ''}`}>
       <div className="block-title">{title}</div>
       <div className="block-content">
         {chart && data ? (

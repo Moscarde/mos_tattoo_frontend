@@ -86,18 +86,23 @@ function DashboardGrid({ schema, blocks }) {
 
           return (
             <div key={`stacked-${index}`} style={blockStyle} data-block-type="stacked">
-              {item.blocks.map((block) => (
-                <div 
-                  key={block.id} 
-                  style={{ 
-                    height: 'calc(50% - 10px)', // 50% do container menos metade do gap
-                    minHeight: '140px',
-                  }}
-                  className="dashboard-block-wrapper"
-                >
-                  <DashboardBlock block={block} />
-                </div>
-              ))}
+              {item.blocks.map((block) => {
+                const isMetric = block.chart?.type === 'metric';
+                const wrapperClass = `dashboard-block-wrapper ${isMetric ? 'metric-wrapper' : ''}`;
+                
+                return (
+                  <div 
+                    key={block.id} 
+                    style={{ 
+                      height: 'calc(50% - 10px)', // 50% do container menos metade do gap
+                      minHeight: '140px',
+                    }}
+                    className={wrapperClass}
+                  >
+                    <DashboardBlock block={block} />
+                  </div>
+                );
+              })}
             </div>
           );
         } else {
@@ -107,8 +112,16 @@ function DashboardGrid({ schema, blocks }) {
             gridRow: `span ${item.rowSpan}`,
           };
 
+          const isMetric = item.block.chart?.type === 'metric';
+          const wrapperClass = `dashboard-block-wrapper ${isMetric ? 'metric-wrapper' : ''}`;
+
           return (
-            <div key={item.block.id} style={blockStyle} className="dashboard-block-wrapper" data-block-type="single">
+            <div 
+              key={item.block.id} 
+              style={blockStyle} 
+              className={wrapperClass}
+              data-block-type="single"
+            >
               <DashboardBlock block={item.block} />
             </div>
           );
