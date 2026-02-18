@@ -24,7 +24,7 @@ function DashboardBlock({ block }) {
       <div className="block-title">{title}</div>
       <div className="block-content">
         {chart && data ? (
-          <ChartRenderer chartType={chart.type} data={data} />
+          <ChartRenderer chart={chart} data={data} />
         ) : (
           <div className="block-no-data">Sem dados disponíveis</div>
         )}

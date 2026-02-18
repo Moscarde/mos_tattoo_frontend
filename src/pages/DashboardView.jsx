@@ -113,9 +113,6 @@ function DashboardView() {
             </p>
           )}
         </div>
-        <button onClick={loadDashboard} className="btn btn-secondary">
-          🔄 Atualizar
-        </button>
       </div>
 
       {/* Filtros dinâmicos */}

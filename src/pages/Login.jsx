@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { login } from '../services/auth';
+import { login, isAuthenticated } from '../services/auth';
 
 function Login() {
   const navigate = useNavigate();
@@ -10,6 +10,13 @@ function Login() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Redirecionar se já estiver logado
+  useEffect(() => {
+    if (isAuthenticated()) {
+      navigate('/app/dashboards', { replace: true });
+    }
+  }, [navigate]);
 
   const handleChange = (e) => {
     setFormData({
@@ -43,9 +50,9 @@ function Login() {
       console.log('Resultado do login:', result);
 
       if (result.success) {
-        // Redirecionar para área logada
+        // Redirecionar para hub de dashboards
         console.log('Login bem-sucedido, redirecionando...');
-        navigate('/app');
+        navigate('/app/dashboards');
       } else {
         console.error('Erro no login:', result.error);
         setError(result.error);

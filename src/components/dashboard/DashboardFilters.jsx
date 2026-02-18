@@ -338,64 +338,65 @@ const DashboardFilters = ({ availableFilters, appliedFilters, onApplyFilters, lo
         className={`dashboard-filters-content ${isExpanded ? 'expanded' : ''}`}
         onSubmit={handleApply}
       >
-        <div className="filters-grid">
-          {/* Filtros Temporais */}
-          {hasTemporalFilter && (
-            <>
-              <div className="filter-group">
-                <label className="filter-label">Período</label>
-                <select 
-                  className="filter-select"
-                  value={period}
-                  onChange={(e) => setPeriod(e.target.value)}
-                  disabled={loading || isTemporalDisabled}
-                >
-                  <option value="total">Período Total</option>
-                  <option value="yesterday">Ontem</option>
-                  <option value="current_month">Mês Atual</option>
-                  <option value="previous_month">Mês Anterior</option>
-                  <option value="custom">Personalizado</option>
-                </select>
+        <div className="filters-wrapper">
+          <div className="filters-grid">
+            {/* Filtros Temporais */}
+            {hasTemporalFilter && (
+              <>
+                <div className="filter-group">
+                  <label className="filter-label">Período</label>
+                  <select 
+                    className="filter-select"
+                    value={period}
+                    onChange={(e) => setPeriod(e.target.value)}
+                    disabled={loading || isTemporalDisabled}
+                  >
+                    <option value="total">Período Total</option>
+                    <option value="yesterday">Ontem</option>
+                    <option value="current_month">Mês Atual</option>
+                    <option value="previous_month">Mês Anterior</option>
+                    <option value="custom">Personalizado</option>
+                  </select>
+                </div>
+
+                <div className="filter-group">
+                  <label className="filter-label">Data Inicial</label>
+                  <DatePicker
+                    selected={startDate}
+                    onChange={(date) => setStartDate(date)}
+                    dateFormat="dd/MM/yyyy"
+                    className="filter-date-input"
+                    disabled={loading || isTemporalDisabled || !isCustomPeriod}
+                    placeholderText="Selecione a data inicial"
+                    minDate={minAllowedDate}
+                    maxDate={endDate || maxAllowedDate || new Date()}
+                  />
+                </div>
+
+                <div className="filter-group">
+                  <label className="filter-label">Data Final</label>
+                  <DatePicker
+                    selected={endDate}
+                    onChange={(date) => setEndDate(date)}
+                    dateFormat="dd/MM/yyyy"
+                    className="filter-date-input"
+                    disabled={loading || isTemporalDisabled || !isCustomPeriod}
+                    placeholderText="Selecione a data final"
+                    minDate={startDate || minAllowedDate}
+                    maxDate={maxAllowedDate || new Date()}
+                  />
+                </div>
+              </>
+            )}
+
+            {!hasTemporalFilter && (
+              <div className="filter-group filter-disabled-message">
+                <p>Filtros temporais não disponíveis para este dashboard</p>
               </div>
+            )}
 
-              <div className="filter-group">
-                <label className="filter-label">Data Inicial</label>
-                <DatePicker
-                  selected={startDate}
-                  onChange={(date) => setStartDate(date)}
-                  dateFormat="dd/MM/yyyy"
-                  className="filter-date-input"
-                  disabled={loading || isTemporalDisabled || !isCustomPeriod}
-                  placeholderText="Selecione a data inicial"
-                  minDate={minAllowedDate}
-                  maxDate={endDate || maxAllowedDate || new Date()}
-                />
-              </div>
-
-              <div className="filter-group">
-                <label className="filter-label">Data Final</label>
-                <DatePicker
-                  selected={endDate}
-                  onChange={(date) => setEndDate(date)}
-                  dateFormat="dd/MM/yyyy"
-                  className="filter-date-input"
-                  disabled={loading || isTemporalDisabled || !isCustomPeriod}
-                  placeholderText="Selecione a data final"
-                  minDate={startDate || minAllowedDate}
-                  maxDate={maxAllowedDate || new Date()}
-                />
-              </div>
-            </>
-          )}
-
-          {!hasTemporalFilter && (
-            <div className="filter-group filter-disabled-message">
-              <p>Filtros temporais não disponíveis para este dashboard</p>
-            </div>
-          )}
-
-          {/* Filtros Categóricos */}
-          {hasCategoricalFilters && availableFilters.categorical.map(filter => {
+            {/* Filtros Categóricos */}
+            {hasCategoricalFilters && availableFilters.categorical.map(filter => {
             const selectedValues = categoricalSelections[filter.field] || [];
             const allSelected = selectedValues.length === filter.values.length;
             const noneSelected = selectedValues.length === 0;
@@ -475,25 +476,26 @@ const DashboardFilters = ({ availableFilters, appliedFilters, onApplyFilters, lo
               </div>
             );
           })}
-        </div>
+          </div>
 
-        {/* Ações */}
-        <div className="filter-actions">
-          <button 
-            type="button"
-            className="btn btn-secondary"
-            onClick={handleClear}
-            disabled={loading}
-          >
-            Limpar
-          </button>
-          <button 
-            type="submit"
-            className="btn btn-primary"
-            disabled={loading}
-          >
-            {loading ? 'Carregando...' : 'Atualizar'}
-          </button>
+          {/* Ações */}
+          <div className="filter-actions">
+            <button 
+              type="button"
+              className="btn btn-secondary"
+              onClick={handleClear}
+              disabled={loading}
+            >
+              Limpar
+            </button>
+            <button 
+              type="submit"
+              className="btn btn-primary"
+              disabled={loading}
+            >
+              {loading ? 'Carregando...' : 'Atualizar'}
+            </button>
+          </div>
         </div>
       </form>
     </div>
