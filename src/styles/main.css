@@ -133,6 +133,7 @@ body {
         opacity: 0;
         transform: translateY(-20px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -1026,9 +1027,12 @@ body {
 }
 
 @keyframes bounceIndicator {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: translateX(-50%) translateY(0);
     }
+
     50% {
         transform: translateX(-50%) translateY(-4px);
     }
@@ -1410,6 +1414,7 @@ body {
 
 /* Prevenir zoom em inputs em iOS */
 @media (max-width: 576px) {
+
     input[type="text"],
     input[type="email"],
     input[type="password"],
