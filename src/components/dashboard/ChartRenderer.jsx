@@ -155,9 +155,10 @@ function ChartRenderer({ chart, data }) {
       return { abbreviated, full };
     }
     
-    // Valores menores que 1000
+    // Valores menores que 1000 - mostrar sem decimais se for inteiro
+    const isInteger = Number.isInteger(value);
     const formatted = value.toLocaleString('pt-BR', { 
-      minimumFractionDigits: decimalPlaces,
+      minimumFractionDigits: isInteger ? 0 : decimalPlaces,
       maximumFractionDigits: decimalPlaces 
     });
     return { abbreviated: formatted, full: formatted };
@@ -167,22 +168,77 @@ function ChartRenderer({ chart, data }) {
   const formatXValue = (value) => {
     if (!value) return '';
     
-    // Se for uma data ISO, formatar
-    if (typeof value === 'string' && value.includes('T')) {
+    // Verificar se é uma string de data ISO válida (formato: YYYY-MM-DDTHH:mm:ss)
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
       const date = new Date(value);
-      return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+      // Verificar se a data é válida
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+      }
     }
     
     return value;
   };
 
   // Cores do tema
-  
 const COLORS = [
   '#FFD700', '#FFA500', '#FFE55C', '#B8860B', '#333333', '#856404', // Escala Amarela
   '#1E3A8A', '#002D59', // Escala Azul
   '#8B0000', '#B22222', '#FF0000', '#450A0A' // Escala Vermelha
 ];
+
+  // Função customizada para renderizar labels nas barras horizontais
+  const renderBarLabel = (props) => {
+    const { x, y, width, height, value } = props;
+    
+    if (!value && value !== 0) return null;
+    
+    // Formatar o valor com abreviação
+    const { abbreviated } = abbreviateValue(value, 2);
+    
+    // Posicionar o label à direita da barra
+    const labelX = x + width + 5; // 5px de distância da barra
+    const labelY = y + height / 2; // Centralizado verticalmente
+    
+    return (
+      <text
+        x={labelX}
+        y={labelY}
+        fill="#000000"
+        fontSize="11px"
+        fontWeight="600"
+        textAnchor="start"
+        dominantBaseline="middle"
+      >
+        {abbreviated}
+      </text>
+    );
+  };
+
+  // Tooltip customizado para exibir nome completo
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div style={{
+          backgroundColor: '#ffffff',
+          border: '2px solid #FFD700',
+          borderRadius: '8px',
+          padding: '10px',
+          fontSize: '13px'
+        }}>
+          <p style={{ margin: '0 0 8px 0', fontWeight: '700', color: '#000000' }}>
+            {label}
+          </p>
+          {payload.map((entry, index) => (
+            <p key={index} style={{ margin: '4px 0', color: '#000000' }}>
+              <span style={{ fontWeight: '600' }}>{entry.name}:</span> {abbreviateValue(entry.value, 2).full}
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
 
   // Renderizar métrica (valor único)
   if (chartType === 'metric') {
@@ -284,7 +340,7 @@ const COLORS = [
               <BarChart 
                 data={chartData} 
                 layout="vertical"
-                margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
+                margin={{ top: 5, right: 60, left: 20, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
                 <XAxis 
@@ -298,15 +354,17 @@ const COLORS = [
                   dataKey="name" 
                   stroke="#000000"
                   style={{ fontSize: '11px' }}
-                  width={100}
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#ffffff', 
-                    border: '2px solid #FFD700',
-                    borderRadius: '8px'
+                  width={200}
+                  interval={0}
+                  tickFormatter={(value) => {
+                    // Truncar nomes muito longos para caber no eixo
+                    if (typeof value === 'string' && value.length > 30) {
+                      return value.substring(0, 27) + '...';
+                    }
+                    return value;
                   }}
                 />
+                <Tooltip content={<CustomTooltip />} />
                 <Legend 
                   verticalAlign="top"
                   height={36}
@@ -316,7 +374,8 @@ const COLORS = [
                     key={serie.label} 
                     dataKey={serie.label} 
                     fill={COLORS[index % COLORS.length]}
-                    barSize={12} // <--- A espessura definida aqui
+                    barSize={12}
+                    label={renderBarLabel}
                   />
                 ))}
               </BarChart>
